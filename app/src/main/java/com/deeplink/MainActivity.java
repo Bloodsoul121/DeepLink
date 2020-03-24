@@ -56,7 +56,20 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        mHandler.postDelayed(this::sendNotify, 3000);
+        mHandler.postDelayed(this::task, 3000);
+    }
+
+    private void task() {
+//        sendNotify();
+
+//        callReceiver();
+    }
+
+    private void callReceiver() {
+        Intent intent = new Intent();
+        intent.setAction("com.deeplink.receiver.action");
+        intent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
+        sendBroadcast(intent);
     }
 
     private void adapterO() {
