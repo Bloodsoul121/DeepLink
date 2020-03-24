@@ -42,6 +42,9 @@ public class CustomWebViewClient extends WebViewClient {
 
             Intent intent = new Intent();
             intent.setAction("android.intent.action.VIEW");
+            intent.addCategory("android.intent.category.BROWSABLE");
+            intent.setComponent(null);
+            intent.setSelector(null);
             Uri uri = Uri.parse(url);
             intent.setData(uri);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
