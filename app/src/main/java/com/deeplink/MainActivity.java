@@ -1,21 +1,25 @@
 package com.deeplink;
 
+import android.app.AppOpsManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.NotificationCompat;
 
 import com.deeplink.web.CustomWebView;
 
+import java.lang.reflect.Method;
 import java.net.URISyntaxException;
 
 import butterknife.BindView;
@@ -56,18 +60,21 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        mHandler.postDelayed(this::task, 3000);
+        mHandler.postDelayed(this::task, 2000);
     }
 
     private void task() {
 //        sendNotify();
 
 //        callReceiver();
+
+//        canBackgroundStart(this);
     }
 
     private void callReceiver() {
         Intent intent = new Intent();
         intent.setAction("com.deeplink.receiver.action");
+        intent.setComponent(new ComponentName("com.deeplink", "com.deeplink.CustomReceiver")); // 适配8.0的广播
         intent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
         sendBroadcast(intent);
     }
@@ -106,7 +113,7 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
             return;
         }
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 1, intent,PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 1, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "111111")
                 .setSmallIcon(R.drawable.ic_launcher_round)
                 .setContentTitle("title")
@@ -118,6 +125,26 @@ public class MainActivity extends AppCompatActivity {
         Notification notification = builder.build();
         notification.flags |= Notification.FLAG_NO_CLEAR;
         mNotificationManager.notify(1, notification);
+    }
+
+    private boolean canBackgroundStart(Context context) {
+        boolean isSupport = false;
+        boolean canBackStart = false;
+        AppOpsManager ops = (AppOpsManager) context.getSystemService(Context.APP_OPS_SERVICE);
+        try {
+            int op = 10021; // >= 23
+            // ops.checkOpNoThrow(op, uid, packageName)
+            Method method = ops.getClass().getMethod("checkOpNoThrow", new Class[]{int.class, int.class, String.class});
+            Integer result = (Integer) method.invoke(ops, op, android.os.Process.myUid(), context.getPackageName());
+            canBackStart = result == AppOpsManager.MODE_ALLOWED;
+            isSupport = true;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        if (isSupport) {
+            Toast.makeText(this, "后台弹出权限 " + canBackStart, Toast.LENGTH_SHORT).show();
+        }
+        return canBackStart;
     }
 
 }
